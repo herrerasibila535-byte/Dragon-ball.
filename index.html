@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>DBZ OMNI-ARCHIVE V.2.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+    --bg-deep: #020205;
+    --glass-panel: rgba(16, 20, 30, 0.85);
+    --glass-border: rgba(100, 200, 255, 0.1);
+    --neon-blue: #00f3ff;
+    --neon-gold: #ffd700;
+    --neon-red: #ff003c;
+    --neon-purple: #bc13fe;
+    --grid-color: rgba(0, 243, 255, 0.05);
+    --font-head: 'Orbitron', sans-serif;
+    --font-body: 'Rajdhani', sans-serif;
+}
+
+*{box-sizing:border-box; margin:0; padding:0; user-select: none;}
+
+body{
+    background: var(--bg-deep);
+    color: #fff;
+    font-family: var(--font-body);
+    overflow-x: hidden;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+/* --- FONDO Y AMBIENTE --- */
+.scanlines {
+    position: fixed; inset: 0; pointer-events: none; z-index: 999;
+    background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+    background-size: 100% 4px;
+    animation: scanline 10s linear infinite;
+    opacity: 0.6;
+}
+
+.particles {
+    position: fixed; inset: 0; z-index: -1;
+    background-image: 
+        radial-gradient(circle at 50% 50%, rgba(0, 243, 255, 0.05), transparent 60%),
+        linear-gradient(0deg, transparent 24%, var(--grid-color) 25%, var(--grid-color) 26%, transparent 27%, transparent 74%, var(--grid-color) 75%, var(--grid-color) 76%, transparent 77%, transparent),
+        linear-gradient(90deg, transparent 24%, var(--grid-color) 25%, var(--grid-color) 26%, transparent 27%, transparent 74%, var(--grid-color) 75%, var(--grid-color) 76%, transparent 77%, transparent);
+    background-size: 100% 100%, 50px 50px, 50px 50px;
+    perspective: 500px;
+    animation: moveGrid 20s linear infinite;
+}
+
+@keyframes moveGrid {
+    0% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(20px) scale(1.02); }
+    100% { transform: translateY(0) scale(1); }
+}
+
+/* --- UI ELEMENTS --- */
+header {
+    padding: 3rem 1rem;
+    text-align: center;
+    position: relative;
+    z-index: 10;
+}
+
+h1.glitch-title {
+    font-family: var(--font-head);
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    font-weight: 900;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue);
+    letter-spacing: 5px;
+    position: relative;
+    display: inline-block;
+}
+
+h1.glitch-title::before, h1.glitch-title::after {
+    content: attr(data-text);
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--bg-deep);
+}
+h1.glitch-title::before {
+    left: 2px; text-shadow: -1px 0 var(--neon-red);
+    clip-path: inset(0 0 0 0);
+    animation: glitch-anim-1 2s infinite linear alternate-reverse;
+}
+h1.glitch-title::after {
+    left: -2px; text-shadow: -1px 0 var(--neon-blue);
+    clip-path: inset(0 0 0 0);
+    animation: glitch-anim-2 3s infinite linear alternate-reverse;
+}
+
+/* --- CONTROLES Y BUSQUEDA --- */
+.hud-controls {
+    display: flex; justify-content: center; gap: 1rem;
+    padding: 0 1rem; margin-bottom: 3rem; flex-wrap: wrap;
+    z-index: 10; position: relative;
+}
+
+.cyber-input {
+    background: rgba(0,0,0,0.6);
+    border: 1px solid var(--neon-blue);
+    padding: 1rem 2rem;
+    color: var(--neon-blue);
+    font-family: var(--font-head);
+    font-size: 1.1rem;
+    width: 300px;
+    border-radius: 0;
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+    transition: 0.3s;
+}
+.cyber-input:focus {
+    box-shadow: 0 0 20px var(--neon-blue);
+    outline: none;
+    background: rgba(0, 243, 255, 0.1);
+}
+
+.cyber-btn {
+    background: transparent;
+    border: 1px solid var(--neon-gold);
+    color: var(--neon-gold);
+    padding: 0 2rem;
+    font-family: var(--font-head);
+    font-weight: bold;
+    cursor: pointer;
+    clip-path: polygon(15% 0, 100% 0, 100% 70%, 85% 100%, 0 100%, 0 30%);
+    transition: 0.3s;
+    display: flex; align-items: center;
+}
+.cyber-btn:hover {
+    background: var(--neon-gold);
+    color: #000;
+    box-shadow: 0 0 20px var(--neon-gold);
+}
+
+/* --- GRID DE CARTAS (HOLOGRÁFICAS) --- */
+.archive-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+    padding: 2rem clamp(1rem, 10vw, 5rem);
+    max-width: 1600px;
+    margin: 0 auto;
+    perspective: 1000px; /* Para el efecto 3D */
+}
+
+.holo-card {
+    position: relative;
+    height: 400px;
+    background: var(--glass-panel);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.3s;
+    transform-style: preserve-3d; /* Clave para el efecto */
+}
+
+.holo-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--neon-blue);
+    box-shadow: 0 0 10px var(--neon-blue);
+    transform: scaleX(0); transition: 0.4s; transform-origin: left;
+}
+.holo-card:hover::before { transform: scaleX(1); }
+
+.holo-card img {
+    width: 100%; height: 60%; object-fit: cover;
+    opacity: 0.8; transition: 0.4s;
+    mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+}
+.holo-card:hover img { opacity: 1; height: 65%; }
+
+.card-data {
+    padding: 1.5rem;
+    position: relative;
+}
+.card-data h3 {
+    font-family: var(--font-head);
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #fff;
+}
+.card-data .rank {
+    color: var(--neon-gold);
+    font-size: 0.8rem; letter-spacing: 2px;
+    text-transform: uppercase;
+}
+.power-bar-mini {
+    height: 4px; background: #333; margin-top: 1rem; width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+.power-fill {
+    height: 100%; background: var(--neon-blue);
+    box-shadow: 0 0 5px var(--neon-blue);
+}
+
+/* --- MODAL (DATA TERMINAL) --- */
+.terminal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.9);
+    backdrop-filter: blur(20px);
+    z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: 0.4s;
+}
+.terminal-overlay.active { opacity: 1; pointer-events: all; }
+
+.terminal-box {
+    width: 90%; max-width: 1000px;
+    height: 80vh;
+    background: rgba(10,10,15,0.95);
+    border: 1px solid var(--neon-blue);
+    display: grid; grid-template-columns: 1fr 1.5fr;
+    position: relative;
+    box-shadow: 0 0 50px rgba(0, 243, 255, 0.2);
+    clip-path: polygon(0 0, 100% 0, 100% 95%, 95% 100%, 0 100%);
+    transform: scale(0.9); transition: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.terminal-overlay.active .terminal-box { transform: scale(1); }
+
+.terminal-img {
+    position: relative; overflow: hidden;
+    border-right: 1px solid var(--glass-border);
+}
+.terminal-img img { width: 100%; height: 100%; object-fit: cover; }
+.scan-line {
+    position: absolute; top: 0; left: 0; width: 100%; height: 5px;
+    background: var(--neon-blue);
+    box-shadow: 0 0 15px var(--neon-blue);
+    animation: scanVertical 2s infinite linear;
+    opacity: 0.5;
+}
+
+.terminal-content {
+    padding: 3rem;
+    overflow-y: auto;
+}
+.close-btn {
+    position: absolute; top: 1rem; right: 1rem;
+    background: none; border: none; color: var(--neon-red);
+    font-size: 2rem; cursor: pointer;
+    font-family: var(--font-head);
+}
+
+.stat-row {
+    display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;
+}
+.stat-name { width: 100px; color: #888; font-size: 0.9rem; }
+.stat-bar-bg { flex: 1; height: 10px; background: #222; position: relative; }
+.stat-bar-fill { height: 100%; background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple)); width: 0%; transition: 1s ease-out; }
+
+/* --- START SCREEN --- */
+#start-screen {
+    position: fixed; inset: 0; z-index: 2000;
+    background: #000;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: 0.5s;
+}
+#start-btn {
+    font-size: 2rem; padding: 1rem 3rem;
+    border: 2px solid var(--neon-blue);
+    color: var(--neon-blue); background: transparent;
+    cursor: pointer; font-family: var(--font-head);
+    text-transform: uppercase;
+    animation: pulse 1.5s infinite;
+}
+#start-btn:hover { background: var(--neon-blue); color: #000; }
+
+/* --- ANIMACIONES --- */
+@keyframes glitch-anim-1 {
+    0% { clip-path: inset(20% 0 80% 0); }
+    20% { clip-path: inset(60% 0 10% 0); }
+    40% { clip-path: inset(40% 0 50% 0); }
+    60% { clip-path: inset(80% 0 5% 0); }
+    80% { clip-path: inset(10% 0 70% 0); }
+    100% { clip-path: inset(30% 0 20% 0); }
+}
+@keyframes glitch-anim-2 {
+    0% { clip-path: inset(10% 0 60% 0); }
+    20% { clip-path: inset(30% 0 20% 0); }
+    40% { clip-path: inset(70% 0 10% 0); }
+    60% { clip-path: inset(20% 0 50% 0); }
+    80% { clip-path: inset(60% 0 30% 0); }
+    100% { clip-path: inset(0% 0 80% 0); }
+}
+@keyframes scanVertical { 0%{top:0} 100%{top:100%} }
+@keyframes pulse { 0%{box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.7);} 70%{box-shadow: 0 0 0 20px rgba(0, 243, 255, 0);} 100%{box-shadow: 0 0 0 0 rgba(0, 243, 255, 0);} }
+
+@media(max-width: 800px){
+    .terminal-box { grid-template-columns: 1fr; height: 90vh; }
+    .terminal-img { height: 200px; border-bottom: 1px solid var(--glass-border); border-right: none; }
+}
+</style>
+</head>
+
+<body>
+
+<div id="start-screen">
+    <button id="start-btn">INICIAR SISTEMA</button>
+    <p style="margin-top:1rem; color:#666; font-family: var(--font-body)">⚠️ AUDIO INMERSIVO REQUERIDO</p>
+</div>
+
+<div class="scanlines"></div>
+<div class="particles"></div>
+
+<header>
+    <h1 class="glitch-title" data-text="OMNI-ARCHIVE">OMNI-ARCHIVE</h1>
+    <p style="color: var(--neon-gold); letter-spacing: 5px; margin-top: 10px; font-size: 0.8rem;">BASE DE DATOS MULTIVERSAL CLASIFICADA</p>
+</header>
+
+<div class="hud-controls">
+    <input type="text" class="cyber-input" id="search" placeholder="🔍 BUSCAR SUJETO...">
+    <button class="cyber-btn" onclick="filterData('all')">TODO</button>
+    <button class="cyber-btn" onclick="filterData('Saiyajin')">SAIYAJIN</button>
+    <button class="cyber-btn" onclick="filterData('Dios')">DEIDADES</button>
+    <button class="cyber-btn" onclick="filterData('Villano')">AMENAZAS</button>
+</div>
+
+<main class="archive-grid" id="grid"></main>
+
+<div class="terminal-overlay" id="modal">
+    <div class="terminal-box">
+        <button class="close-btn" onclick="closeModal()">×</button>
+        <div class="terminal-img">
+            <div class="scan-line"></div>
+            <img id="modal-img" src="" alt="">
+        </div>
+        <div class="terminal-content">
+            <h2 id="modal-name" style="font-family: var(--font-head); color: var(--neon-blue); font-size: 3rem; line-height:1;">NOMBRE</h2>
+            <p id="modal-subtitle" style="color: var(--neon-gold); font-size: 1.2rem; margin-bottom: 2rem;">SUBTITULO</p>
+            
+            <p id="modal-desc" style="line-height: 1.6; color: #ddd; margin-bottom: 2rem; border-left: 3px solid var(--neon-blue); padding-left: 1rem;"></p>
+            
+            <div id="modal-stats">
+                </div>
+        </div>
+    </div>
+</div>
+
+<audio id="sfx-hover" src="https://assets.mixkit.co/sfx/preview/mixkit-sci-fi-click-900.mp3"></audio>
+<audio id="sfx-open" src="https://assets.mixkit.co/sfx/preview/mixkit-futuristic-robotic-fast-sweep-171.mp3"></audio>
+<audio id="sfx-ambience" src="https://assets.mixkit.co/sfx/preview/mixkit-space-ship-hum-2136.mp3" loop></audio>
+
+<script>
+// --- BASE DE DATOS MEJORADA ---
+const DB = [
+    {
+        id: 1,
+        name: "Son Goku",
+        form: "Ultra Instinto Dominado",
+        type: "Saiyajin",
+        desc: "El estado que separa la conciencia del cuerpo. Goku ha superado los límites mortales, permitiendo que cada parte de su cuerpo actúe de manera independiente. La técnica suprema de los Ángeles.",
+        img: "https://static.wikia.nocookie.net/dragonball/images/8/8a/Goku_UI.png",
+        stats: { fuerza: 98, velocidad: 100, ki: 95, tecnica: 100 }
+    },
+    {
+        id: 2,
+        name: "Vegeta IV",
+        form: "Ultra Ego (Hakai)",
+        type: "Saiyajin",
+        desc: "El poder de la Destrucción. A diferencia del Ultra Instinto, el Ultra Ego se alimenta del daño recibido y la sed de batalla. Cuanto más arde su espíritu de lucha, más fuerte se vuelve.",
+        img: "https://static.wikia.nocookie.net/dragonball/images/1/19/Vegeta_Super.png",
+        stats: { fuerza: 100, velocidad: 92, ki: 98, resistencia: 100 }
+    },
+    {
+        id: 3,
+        name: "Gohan",
+        form: "Modo Bestia",
+        type: "Saiyajin",
+        desc: "La evolución final del potencial híbrido. Una transformación nacida de la ira pura que rompe cualquier escala de poder lógica. Se dice que su poder bruto supera incluso a Goku y Vegeta.",
+        img: "https://static.wikia.nocookie.net/dragonball/images/f/f6/Gohan_Beast.png",
+        stats: { fuerza: 100, velocidad: 90, ki: 96, ira: 100 }
+    },
+    {
+        id: 4,
+        name: "Broly",
+        form: "Super Saiyajin Full Power",
+        type: "Saiyajin",
+        desc: "El Saiyajin Legendario. Una mutación genética que le otorga un suministro de energía infinito. Su poder crece reactivamente durante el combate, perdiendo la cordura en el proceso.",
+        img: "https://static.wikia.nocookie.net/dragonball/images/f/f2/Broly_DBS_Super_Saiyan_Full_Power.png",
+        stats: { fuerza: 100, velocidad: 85, ki: 100, control: 10 }
+    },
+    {
+        id: 5,
+        name: "Bills",
+        form: "Dios de la Destrucción",
+        type: "Dios",
+        desc: "El destructor del Universo 7. Caprichoso y aterrador, posee la energía Hakai capaz de borrar cualquier cosa de la existencia. Aún no ha mostrado su 100% de poder.",
+        img: "https://static.wikia.nocookie.net/dragonball/images/9/9e/Beerus.png",
+        stats: { fuerza: 99, velocidad: 99, ki: 100, hakai: 100 }
+    },
+    {
+        id: 6,
+        name: "Freezer",
+        form: "Black Freezer",
+        type: "Villano",
+        desc: "Tras entrenar 10 años en una Habitación del Tiempo de otra dimensión, el Emperador ha vuelto. Derrotó a los Saiyajins en sus formas divinas con un solo golpe.",
+        img: "https://static.wikia.nocookie.net/dragonball/images/3/36/Black_Frieza.png",
+        stats: { fuerza: 100, velocidad: 100, ki: 99, maldad: 100 }
+    },
+    {
+        id: 7,
+        name: "Piccolo",
+        form: "Orange Piccolo",
+        type: "Namekiano",
+        desc: "Gracias a un deseo a Shenron que desbloqueó su potencial extra, Piccolo ha alcanzado el nivel de los dioses, volviéndose más robusto y brutalmente fuerte.",
+        img: "https://static.wikia.nocookie.net/dragonball/images/ac/Piccolo_Orange.png",
+        stats: { fuerza: 90, velocidad: 85, ki: 92, estrategia: 100 }
+    },
+    {
+        id: 8,
+        name: "Cell Max",
+        form: "Bio-Androide Incompleto",
+        type: "Villano",
+        desc: "Una recreación monstruosa del Cell original. Aunque mentalmente incompleto y salvaje, su poder destructivo amenaza con destruir la Tierra entera si no es detenido.",
+        img: "https://static.wikia.nocookie.net/dragonball/images/3/30/Cell_Max.png",
+        stats: { fuerza: 98, velocidad: 80, ki: 95, inteligencia: 10 }
+    }
+];
+
+// --- LÓGICA DEL SISTEMA ---
+const grid = document.getElementById('grid');
+const modal = document.getElementById('modal');
+const sfxHover = document.getElementById('sfx-hover');
+const sfxOpen = document.getElementById('sfx-open');
+
+// 1. INICIALIZACIÓN
+document.getElementById('start-btn').addEventListener('click', () => {
+    document.getElementById('start-screen').style.opacity = '0';
+    setTimeout(() => {
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('sfx-ambience').volume = 0.3;
+        document.getElementById('sfx-ambience').play();
+    }, 500);
+    renderGrid(DB);
+});
+
+// 2. RENDERIZADO HOLOGRÁFICO
+function renderGrid(data) {
+    grid.innerHTML = '';
+    data.forEach(char => {
+        const card = document.createElement('div');
+        card.className = 'holo-card';
+        // Calcular porcentaje para barra visual
+        const avgStats = Object.values(char.stats).reduce((a,b)=>a+b,0) / 4;
+        
+        card.innerHTML = `
+            <img src="${char.img}" alt="${char.name}">
+            <div class="card-data">
+                <h3>${char.name}</h3>
+                <span class="rank">${char.form}</span>
+                <div class="power-bar-mini">
+                    <div class="power-fill" style="width: ${avgStats}%"></div>
+                </div>
+            </div>
+        `;
+
+        // Eventos
+        card.addEventListener('mouseenter', () => {
+            sfxHover.currentTime = 0;
+            sfxHover.play();
+        });
+        card.addEventListener('click', () => openTerminal(char));
+        
+        // Efecto Tilt 3D
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const xPct = x / rect.width;
+            const yPct = y / rect.height;
+            
+            const xRot = (0.5 - yPct) * 20; // Rango de rotación
+            const yRot = (xPct - 0.5) * 20;
+
+            card.style.transform = `perspective(1000px) rotateX(${xRot}deg) rotateY(${yRot}deg) scale(1.05)`;
+        });
+
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = `perspective(1000px) rotateX(0) rotateY(0) scale(1)`;
+        });
+
+        grid.appendChild(card);
+    });
+}
+
+// 3. BUSQUEDA Y FILTRO
+document.getElementById('search').addEventListener('input', (e) => {
+    const term = e.target.value.toLowerCase();
+    const filtered = DB.filter(c => c.name.toLowerCase().includes(term) || c.form.toLowerCase().includes(term));
+    renderGrid(filtered);
+});
+
+function filterData(type) {
+    if(type === 'all') renderGrid(DB);
+    else {
+        const filtered = DB.filter(c => c.type === type);
+        renderGrid(filtered);
+    }
+}
+
+// 4. TERMINAL (MODAL)
+function openTerminal(char) {
+    sfxOpen.currentTime = 0;
+    sfxOpen.play();
+    
+    document.getElementById('modal-img').src = char.img;
+    document.getElementById('modal-name').innerText = char.name;
+    document.getElementById('modal-subtitle').innerText = char.form + " // " + char.type.toUpperCase();
+    document.getElementById('modal-desc').innerText = char.desc;
+
+    // Generar Estadísticas
+    const statsContainer = document.getElementById('modal-stats');
+    statsContainer.innerHTML = '';
+    
+    for (const [key, value] of Object.entries(char.stats)) {
+        const row = document.createElement('div');
+        row.className = 'stat-row';
+        row.innerHTML = `
+            <span class="stat-name">${key.toUpperCase()}</span>
+            <div class="stat-bar-bg">
+                <div class="stat-bar-fill" style="width: 0%"></div>
+            </div>
+            <span style="color:var(--neon-blue); font-weight:bold;">${value}</span>
+        `;
+        statsContainer.appendChild(row);
+        
+        // Animar barra
+        setTimeout(() => {
+            row.querySelector('.stat-bar-fill').style.width = value + '%';
+        }, 100); // Pequeño delay para que se vea la animación
+    }
+
+    modal.classList.add('active');
+}
+
+function closeModal() {
+    modal.classList.remove('active');
+}
+
+// Cerrar con Escape
+document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape') closeModal();
+});
+
+</script>
+</body>
+</html>
